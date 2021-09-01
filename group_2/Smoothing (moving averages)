@@ -1,0 +1,172 @@
+#OOP Programming
+#Real estate valuation data set
+#Group 2
+#Smoothing (moving averages)
+#27/03/2021
+
+#The purpose of of this section of the programis to smoothen up the data  
+#This is done by removing the noise which represent the random varaition in the data 
+#On this example we try to smoothen the data using three methods:
+# 1. Simple Moving Average method  --> User should provide a value for the moving average parameter, otherwise the alogrithm will take the defualt value
+# 2. Cumulative Moving Average --> User does not need to pass anything except selecting the data parameter to be smoothed
+# 3. Exponential Moving Average --> User should provide a value for the smoothing factor(Alpha), otherwise the algorithm will take the default value 
+
+   
+import pandas as pd
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+from scipy import interpolate
+
+#Import Data 
+table = pd.read_excel(r'E:\Sciebo\20 - OOP\Group 2\100 - Data Sets\Real estate valuation data set.xlsx')
+table
+class Smoothing():
+  #  def __init__(self, Parameter_ToBe_Smoothed, NumberOfDecimals=5):
+
+    @classmethod
+    def SimpleMovingAverage(self, RawData, NumberOfDecimals, MovingAverageRange=1):
+        try:
+            
+            Smoothed_Data_SMA=[]  
+            #Mode: considering left and right data points range of that data point of interes to compute the series of means
+            for i in range(0, len(RawData)):        
+       
+                # Smoothing the first data point by considering only the next data point 
+                if (i==0) :
+                    Smoothed_Data_SMA.append (np.round(sum(RawData[0:2])/2,NumberOfDecimals)) 
+                
+                # Smoothing the data when (i-MovingAverageRange<0) -> moving average of left side > availble data points at the left side
+                # Scale down the moving average to the number of available data points at the left side of that data point
+                elif (i-MovingAverageRange<0):
+                    Smoothed_Data_SMA.append (np.round(sum(RawData[0:i*2+1])/(i*2+1), NumberOfDecimals))
+                    
+                 # Smoothing the last data point by considering only the previous smoothed data point 
+                elif (i == len(RawData)-1):
+                    Smoothed_Data_SMA.append (np.round((RawData[i]+ Smoothed_Data_SMA[i-1])/2, NumberOfDecimals))
+                    
+                # Smoothing the data when (i+n> SizeOfAvailableDataPoints)
+                # --> moving average of right side > availble data points at the right side
+                # Scale down the moving average to the number of available data points at the right side of that data point
+                elif (i+ MovingAverageRange > len(RawData) -1):
+                    AvailableDataPointAttheRightSide= len(RawData) -i-1;
+                    Smoothed_Data_SMA.append (np.round(sum(RawData[i-AvailableDataPointAttheRightSide:i+AvailableDataPointAttheRightSide+1])/(AvailableDataPointAttheRightSide*2+1), NumberOfDecimals))
+                
+                # Smoothing considering data with a suitable value of moving average          
+                else:
+                    Smoothed_Data_SMA.append (np.round(sum(RawData[i-MovingAverageRange:i+MovingAverageRange+1])/(MovingAverageRange*2+1), NumberOfDecimals))
+           
+            return Smoothed_Data_SMA
+        except:
+            
+            if type (RawData) is dict:
+                return("Error, Raw data with a data type (dict) is not suitable, try apandas.core.frame.DataFrame")
+            elif type (RawData) is tuple:
+                return("Error, Raw data with a data type (tuple) is not suitable, try apandas.core.frame.DataFrame")
+            elif type (RawData) is str:
+                return("Error, Raw data with a data type (str) is not suitable, try apandas.core.frame.DataFrame")
+            elif type (RawData) is int:
+                return("Error, Raw data with a data type (int) is not suitable, try apandas.core.frame.DataFrame")
+            else:
+                return("Error, check data type; try(apandas.core.frame.DataFrame), check the quality of the data") 
+                
+    @classmethod           
+    def CumulativeMovingAverage(self, RawData, NumberOfDecimals):
+        try:
+            Smoothed_Data_CMA =[]
+            for i in range(0, len(RawData)): 
+                Smoothed_Data_CMA.append (np.round(sum(RawData[0:i+1])/(i+1),NumberOfDecimals))
+            return Smoothed_Data_CMA
+        
+        except:
+            
+            if type (RawData) is dict:
+                return("Error, Raw data with a data type (dict) is not suitable, try apandas.core.frame.DataFrame")
+            elif type (RawData) is tuple:
+                return("Error, Raw data with a data type (tuple) is not suitable, try apandas.core.frame.DataFrame")
+            elif type (RawData) is str:
+                return("Error, Raw data with a data type (str) is not suitable, try apandas.core.frame.DataFrame")
+            elif type (RawData) is int:
+                return("Error, Raw data with a data type (int) is not suitable, try apandas.core.frame.DataFrame")
+            else:
+                return("Error, check data type; try(apandas.core.frame.DataFrame), check the quality of the data")   
+                
+    @classmethod           
+    def ExponentialMovingAverage(self, RawData, NumberOfDecimals, SmoothingFactorAlpha=0.2):
+        #Overwriting the list 
+        Smoothed_Data_EMA =[]
+        try: 
+            for i in range(0, len(RawData)): 
+
+                # Passing the first data point without any smoothing  
+                if (i==0):
+                    Smoothed_Data_EMA.append (np.round(RawData[i],NumberOfDecimals))
+                # Smoothing the data points based on the current data point and the previous data point.
+                # The SmoothingFactorAlpha decide on the weight of the data points, which data point has more impact (current? or the previous?) 
+                else:
+                    Smoothed_Data_EMA.append (np.round(SmoothingFactorAlpha*RawData[i]+(1-SmoothingFactorAlpha)*RawData[i-1], NumberOfDecimals))
+            return Smoothed_Data_EMA
+        
+        except:
+            
+            if type (RawData) is dict:
+                return("Error, Raw data with a data type (dict) is not suitable, try apandas.core.frame.DataFrame")
+            elif type (RawData) is tuple:
+                return("Error, Raw data with a data type (tuple) is not suitable, try apandas.core.frame.DataFrame")
+            elif type (RawData) is str:
+                return("Error, Raw data with a data type (str) is not suitable, try apandas.core.frame.DataFrame")
+            elif type (RawData) is int:
+                return("Error, Raw data with a data type (int) is not suitable, try apandas.core.frame.DataFrame")
+            else:
+                return("Error, check data type; try(apandas.core.frame.DataFrame), check the quality of the data")                                            
+
+
+
+
+#Test program to validate and to check the smoothing algorithm Using the ExponentialMovingAverage method
+print("This is a test program to test the Exponential Moving Average method")
+try:
+    
+    alpha = np.round(float(input("Enter a value of alpha between 0.1 up to 1: ")),1)
+    while alpha>1 or alpha<0 or alpha==0:
+        print("Alpha value of", alpha,  "is out of range")
+        alpha = np.round(float(input("Enter a value of alpha between 0.1 up to 1: ")),1)
+    print("The value of alpha taken here is:", alpha)
+    #creating test data:
+    TestData=[1,5,10,5,1,3,2,12,3,6,3,13]
+    Data=pd.DataFrame(TestData)
+    ExpectedResults=[]
+    if alpha== 0.1:
+        ExpectedResults=[1, 1.4, 5.5, 9.5, 4.6, 1.2, 2.9, 3.0, 11.1, 3.3, 5.7, 4.0]
+    elif alpha== 0.2:
+        ExpectedResults=[1, 1.8, 6.0, 9.0, 4.2, 1.4, 2.8, 4.0, 10.2, 3.6, 5.4, 5.0]
+    elif alpha== 0.3:
+        ExpectedResults=[1, 2.2, 6.5, 8.5, 3.8, 1.6, 2.7, 5.0, 9.3, 3.9, 5.1, 6.0]
+    elif alpha==0.4:
+        ExpectedResults=[1, 2.6, 7.0, 8.0, 3.4, 1.8, 2.6, 6.0, 8.4, 4.2, 4.8, 7.0]
+    elif alpha== 0.5:
+         ExpectedResults=[1, 3.0, 7.5, 7.5, 3.0, 2.0, 2.5, 7.0, 7.5, 4.5, 4.5, 8.0]
+    elif alpha== 0.6:
+         ExpectedResults=[1, 3.4, 8.0, 7.0, 2.6, 2.2, 2.4, 8.0, 6.6, 4.8, 4.2, 9.0]
+    elif alpha== 0.7:
+         ExpectedResults=[1, 3.8, 8.5, 6.5, 2.2, 2.4, 2.3, 9.0, 5.7, 5.1, 3.9, 10.0] 
+    elif alpha== 0.8:
+         ExpectedResults=[1, 4.2, 9.0, 6.0, 1.8, 2.6, 2.2, 10.0, 4.8, 5.4, 3.6, 11.0]
+    elif alpha== 0.9:
+         ExpectedResults=[1, 4.6, 9.5, 5.5, 1.4, 2.8, 2.1, 11.0, 3.9, 5.7, 3.3, 12.0]
+    elif alpha== 1:
+         ExpectedResults=[1, 5, 10, 5, 1, 3, 2, 12, 3, 6, 3, 13]
+
+
+    if ExpectedResults==Smoothing.ExponentialMovingAverage(Data.iloc[:,0], 1, alpha):
+        print("The expected result and the result from the ExponentialMovingAverage algoritm match.")
+    else: 
+        print("The expected result and the result from the ExponentialMovingAverage algoritm do not match")
+        print("Please check again the algorithm")
+except:
+    print("Unvalid value for alpha!")
+    print("Please, run the test!")
+
+
+
+                
